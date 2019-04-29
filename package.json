@@ -1,0 +1,16 @@
+{
+  "name": "a2u",
+  "version": "0.0.1",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "asar": "^1.0.0",
+    "inquirer": "^6.3.1",
+    "inquirer-filefolder-prompt": "^0.0.1",
+    "semver": "^6.0.0",
+    "sqlite3": "^4.0.6"
+  },
+  "devDependencies": {
+    "pkg": "^4.3.7"
+  }
+}
