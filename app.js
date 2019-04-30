@@ -146,5 +146,53 @@ function stage2(results) {
 }
 
 function stage3() {
+    console.log('Please select what FEATURES you want to ENABLE!');
+    console.log('Don\'t worry, you can come back anytime and change them!');
+    console.log('');
+
+    console.log('FEATURES INFO:');
+    console.log('removeDevToolsBan');
+    console.log('enableDebugMode');
+    console.log('enableDeveloperMode');
+    console.log('showDevToolsOnStartup');
+    console.log('');
+
+    let features = {
+        'removeDevToolsBan': true,
+        'enableDebugMode': false,
+        'enableDeveloperMode': false,
+        'showDevToolsOnStartup': false,
+    };
+
+    let featuresQuestions = [
+        {
+            type: 'confirm',
+            name: 'enableDebugMode',
+            message: 'Do you want enableDebugMode?',
+        },
+        {
+            type: 'confirm',
+            name: 'enableDeveloperMode',
+            message: 'Do you want enableDeveloperMode?',
+        },
+        {
+            type: 'confirm',
+            name: 'showDevToolsOnStartup',
+            message: 'Do you want showDevToolsOnStartup?',
+        },
+    ];
+
+    inquirer.prompt(featuresQuestions).then(answers => {
+        console.log('');
+        Object.assign(features, answers);
+        stage4(features);
+    });
 }
 
+function stage4(features) {
+    console.log(features);
+}
+
+function stage5() {
+    console.log(' = STAGE5 = ');
+}
