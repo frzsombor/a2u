@@ -31,7 +31,8 @@ const crossPlatformConfig = {
     },
     'darwin': {
         'target': {
-            'name': 'Assistant 2.app',
+            // 'name': 'DJI Assistant 2 For Phantom.app',
+            'name': 'Assistant.app',
             'defaultDir': '/Applications/',
         }
     }
@@ -54,6 +55,7 @@ console.log('');
 // Scan current dir for 'DJI Assistant 2.exe'
 let detected = false;
 let currentDir = __dirname;
+// currentDir = '/Applications';
 // currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2';
 // currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2 For Mavic';
 // currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2 For Phantom\\';
@@ -85,10 +87,15 @@ if (!detected) {
 function stage1() {
     console.log('Please select the DJI Assistant that you want to unlock!');
 
+    var msg = 'Select "' + CONFIG.target.name + '".';
+    if (platform === 'darwin') {
+        msg = 'Select the Assistant app.';
+    }
+
     inquirer.prompt({
         type: 'filefolder',
         name: 'file',
-        message: 'Select "' + CONFIG.target.name + '".',
+        message: msg,
         messageCTA: 'Press <enter> to select a file.',
         dialog: {
             type: 'OpenFileDialog',
