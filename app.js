@@ -73,7 +73,24 @@ fs.readdirSync(currentDir).forEach(file => {
                 stage1();
                 return;
             }
-            stage2(results);
+
+            analyzer.showResults(results);
+
+            inquirer.prompt({
+                type: 'confirm',
+                name: 'acceptAutoDetect',
+                message: 'Would you like to use the unlocker on this application?',
+            }).then(answers => {
+                console.log('');
+
+                if (answers.acceptAutoDetect) {
+                    stage2(results);
+                    return;
+                }
+
+                stage1();
+                return;
+            });
         });
     }
 });
@@ -126,6 +143,8 @@ function stage1() {
                 stage1();
                 return;
             }
+
+            analyzer.showResults(results);
             stage2(results);
         });
     });
@@ -136,12 +155,6 @@ function stage2(results) {
     TARGET.type = results.type;
     TARGET.version = results.version || null;
     // console.log(TARGET);
-
-    console.log(
-        'Detected: ' +
-        'DJI Assistant 2 (' + TARGET.type + ') ' +
-        'version ' + ((TARGET.version) ? 'v'+TARGET.version : '[N/A]') + '.'
-    );
 
     console.log('Target directory: ' + TARGET.path);
     console.log('');
@@ -154,7 +167,7 @@ function stage2(results) {
 
 function stage3() {
     console.log('Please select what FEATURES you want to ENABLE!');
-    console.log('Don\'t worry, you can come back anytime and change them!');
+    console.log('Don\'t worry, you can come back and change them anytime!');
     console.log('');
 
     console.log('FEATURES INFO:');
