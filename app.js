@@ -7,7 +7,7 @@ const inquirer = require('inquirer');
 const { exec } = require('child_process');
 
 const analyzer = require('./lib/analyzer');
-const supportcheck = require('./lib/supportcheck');
+const compatcheck = require('./lib/compatcheck');
 
 /* PREPARING */
 
@@ -18,16 +18,6 @@ if (!platforms.includes(platform)) {
     console.error('This operating system ('+ platform +') is not supported!');
     return;
 }
-
-global.versionSupport = {
-    win32: {
-        ALL: [ '1.2.5' ],
-        Mavic: [ '2.0.8' ],
-        Phantom: [ '2.0.7' ],
-    },
-    darwin: {
-    },
-};
 
 const crossPlatformConfig = {
     win32: {
@@ -69,8 +59,8 @@ let detected = false;
 let currentDir = __dirname;
 // currentDir = '/Applications';
 currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2';
-currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2 For Mavic';
-currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2 For Phantom\\';
+// currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2 For Mavic';
+// currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2 For Phantom\\';
 fs.readdirSync(currentDir).forEach(file => {
     //TODO: multiple
     if (file === CONFIG.target.name) {
@@ -89,7 +79,7 @@ fs.readdirSync(currentDir).forEach(file => {
             }
 
             analyzer.showResults(results);
-            supportcheck(results.type, results.version);
+            compatcheck(results.type, results.version);
 
             inquirer.prompt({
                 type: 'confirm',
@@ -104,7 +94,6 @@ fs.readdirSync(currentDir).forEach(file => {
                 }
 
                 stage1();
-                return;
             });
         });
     }
@@ -161,7 +150,7 @@ function stage1() {
 
             analyzer.showResults(results);
 
-            var support = supportcheck(results.type, results.version);
+            var support = compatcheck(results.type, results.version);
             if (support !== 0) {
                 inquirer.prompt({
                     type: 'confirm',
