@@ -37,13 +37,6 @@ const crossPlatformConfig = {
 
 const CONFIG = crossPlatformConfig[platform];
 
-let TARGET = {
-    path: null,
-    type: null, // 'ALL' | 'Mavic' | 'Phantom'
-    version: null,
-    asar: null,
-};
-
 inquirer.registerPrompt(
     'filefolder', require('inquirer-filefolder-prompt')
 );
@@ -57,8 +50,8 @@ console.log('');
 // Scan current dir for 'DJI Assistant 2.exe'
 let detected = false;
 let currentDir = __dirname;
-// currentDir = '/Applications';
-currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2';
+currentDir = '/Applications';
+// currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2';
 // currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2 For Mavic';
 // currentDir = 'd:\\Program Files (x86)\\DJI Assistant 2 For Phantom\\';
 fs.readdirSync(currentDir).forEach(file => {
@@ -79,21 +72,22 @@ fs.readdirSync(currentDir).forEach(file => {
             }
 
             analyzer.showResults(results);
-            compatcheck(results.type, results.version);
 
-            inquirer.prompt({
-                type: 'confirm',
-                name: 'acceptAutoDetect',
-                message: 'Would you like to use the unlocker on this application?',
-            }).then(answers => {
-                console.log('');
+            compatcheck(results.type, results.version, function(compatibility, patchFile) {
+                inquirer.prompt({
+                    type: 'confirm',
+                    name: 'acceptAutoDetect',
+                    message: 'Would you like to use the unlocker on this application?',
+                }).then(answers => {
+                    console.log('');
 
-                if (answers.acceptAutoDetect) {
-                    stage2(results);
-                    return;
-                }
+                    if (answers.acceptAutoDetect) {
+                        stage2(results, patchFile);
+                        return;
+                    }
 
-                stage1();
+                    stage1();
+                });
             });
         });
     }
@@ -150,52 +144,50 @@ function stage1() {
 
             analyzer.showResults(results);
 
-            var support = compatcheck(results.type, results.version);
-            if (support !== 0) {
-                inquirer.prompt({
-                    type: 'confirm',
-                    name: 'forceRun',
-                    message: 'Would you like to use the unlocker on this version?',
-                }).then(answers => {
-                    console.log('');
+            compatcheck(results.type, results.version, function(compatibility, patchFile) {
+                if (compatibility !== 0) {
+                    inquirer.prompt({
+                        type: 'confirm',
+                        name: 'forceRun',
+                        message: 'Would you like to use the unlocker on this version?',
+                    }).then(answers => {
+                        console.log('');
 
-                    if (answers.forceRun) {
-                        stage2(results);
-                        return;
-                    }
+                        if (answers.forceRun) {
+                            stage2(results, patchFile);
+                            return;
+                        }
 
-                    stage1();
-                });
-                return;
-            }
+                        stage1();
+                    });
+                    return;
+                }
 
-            stage2(results);
+                stage2(results, patchFile);
+            });
         });
     });
 }
 
-function stage2(results) {
-    TARGET.path = results.path;
-    TARGET.type = results.type;
-    TARGET.version = results.version || null;
-    TARGET.asar = results.asar;
+function stage2(results, patchFile) {
+    let target = {
+        path: results.path,
+        type: results.type, // 'ALL' | 'Mavic' | 'Phantom'
+        version: results.version,
+        asar: results.asar
+    };
 
-    console.log('Target directory: ' + TARGET.path);
+    let patch = require('./patches/' + patchFile + '.js');
+
+    console.log('Target directory: ' + target.path);
     console.log('');
 
     //TODO: check if already patched (+restore)
 
-    stage3();
+    stage3(target, patch);
 }
 
-function stage3() {
-    let features = {
-        removeDevToolsBan: true,
-        enableDebugMode: true,
-        enableDeveloperMode: false,
-        showDevToolsOnStartup: false,
-    };
-
+function stage3(target, patch) {
     inquirer.prompt({
         type: 'list',
         name: 'mode',
@@ -207,55 +199,55 @@ function stage3() {
     })
     .then(answers => {
         if (answers.mode === 'automatic') {
-            stage4(features);
+            stage4(target, patch);
             return;
         }
 
         console.log('');
         console.log('FEATURES LIST:');
-        console.log('- Remove "anti-DevTools" (*applied automatically):');
-        console.log('  Removes a tricky function that crashes the app if DevTools are open');
-        console.log('- Enable "developer mode":');
-        console.log('  ***');
-        console.log('- Enable "debug mode"');
-        console.log('  ***');
-        console.log('- Auto open DevTools');
-        console.log('  Open DevTools automatically every time you run Assistant');
-        console.log('');
 
+        let features = Object.keys(patch);
+        let featuresQuestions = [];
+
+        features.forEach(key => {
+            let feature = patch[key];
+
+            console.log('- ' + feature.title);
+            console.log('  ' + feature.description);
+
+            if (feature.question) {
+                featuresQuestions.push({
+                    type: 'confirm',
+                    name: key,
+                    message: feature.question,
+                });
+            }
+        });
+
+        console.log('');
         console.log('Please select what FEATURES you want to ENABLE!');
         console.log('Don\'t worry, you can come back and restore defaults anytime!');
         console.log('');
 
-        let featuresQuestions = [
-            {
-                type: 'confirm',
-                name: 'enableDebugMode',
-                message: 'Do you want enableDebugMode? (recommended)',
-            },
-            {
-                type: 'confirm',
-                name: 'enableDeveloperMode',
-                message: 'Do you want enableDeveloperMode?',
-            },
-            {
-                type: 'confirm',
-                name: 'showDevToolsOnStartup',
-                message: 'Do you want showDevToolsOnStartup?',
-            },
-        ];
-
         inquirer.prompt(featuresQuestions).then(answers => {
-            Object.assign(features, answers);
-            stage4(features);
+            let answersKeys = Object.keys(answers);
+            answersKeys.forEach(key => {
+                patch[key].enabled = answers[key];
+            });
+            stage4(target, patch);
         });
     });
 }
 
-function stage4(features) {
+function stage4(target, patch) {
     console.log('');
-    console.log(TARGET);
-    console.log(features);
+
+    let features = Object.keys(patch);
+    features.forEach(key => {
+        if (patch[key].enabled) {
+            patch[key].commit(target);
+        }
+    });
 }
 
 function stage5() {
