@@ -8,6 +8,7 @@ const { exec } = require('child_process');
 
 const analyzer = require('./lib/analyzer');
 const compatcheck = require('./lib/compatcheck');
+const patcher = require('./lib/patcher');
 
 /* PREPARING */
 
@@ -102,7 +103,7 @@ if (!detected) {
 function stage1() {
     console.log('Please select the DJI Assistant that you want to unlock!');
 
-    var msg = 'Select "' + CONFIG.target.name + '".';
+    let msg = 'Select "' + CONFIG.target.name + '".';
     if (platform === 'darwin') {
         msg = 'Select the Assistant app.';
     }
@@ -170,12 +171,7 @@ function stage1() {
 }
 
 function stage2(results, patchFile) {
-    let target = {
-        path: results.path,
-        type: results.type, // 'ALL' | 'Mavic' | 'Phantom'
-        version: results.version,
-        asar: results.asar
-    };
+    let target = results;
 
     let patch = require('./patches/' + patchFile + '.js');
 
@@ -212,8 +208,10 @@ function stage3(target, patch) {
         features.forEach(key => {
             let feature = patch[key];
 
-            console.log('- ' + feature.title);
-            console.log('  ' + feature.description);
+            if (feature.title) {
+                console.log('- ' + feature.title);
+                console.log('  ' + feature.description);
+            }
 
             if (feature.question) {
                 featuresQuestions.push({
@@ -226,7 +224,7 @@ function stage3(target, patch) {
 
         console.log('');
         console.log('Please select what FEATURES you want to ENABLE!');
-        console.log('Don\'t worry, you can come back and restore defaults anytime!');
+        console.log('Don\'t worry, you can come back and change them anytime!');
         console.log('');
 
         inquirer.prompt(featuresQuestions).then(answers => {
@@ -240,16 +238,10 @@ function stage3(target, patch) {
 }
 
 function stage4(target, patch) {
-    console.log('');
-
-    let features = Object.keys(patch);
-    features.forEach(key => {
-        if (patch[key].enabled) {
-            patch[key].commit(target);
-        }
+    patcher.patch(target, patch, function() {
+        console.log('');
+        console.log('ALL DONE!');
+        console.log('');
     });
 }
 
-function stage5() {
-    console.log();
-}

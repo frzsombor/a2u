@@ -8,7 +8,8 @@
     "inquirer": "^6.3.1",
     "inquirer-filefolder-prompt": "^0.0.1",
     "semver": "^6.0.0",
-    "sqlite3": "^4.0.6"
+    "sqlite3": "^4.0.6",
+    "stream-buffer-replace": "^1.0.1"
   },
   "devDependencies": {
     "pkg": "^4.3.7"
